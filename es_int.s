@@ -91,7 +91,8 @@ INIT:
 **************************** LEECAR **********************************************************
 
 LEECAR:
-		MOVEM.L		D1-D5/A0-A5,-(A7) * GUARDAMOS 		
+		*MOVEM.L		D1-D5/A0-A5,-(A7) * GUARDAMOS 		
+		LINK		A6,#0
 		BTST		#0,D0			* Comprobamos el bit 0
 		BNE			LIN_B			* Si es 1 Linea de transmision B 
 		BTST		#0,D0			* Comprobamos el bit 0
@@ -107,21 +108,15 @@ LIN_A:
 BUFF_RA:
 		MOVE.L 		punSA,A2		* Cargamos el puntero que vamos a utlizar
 		MOVE.L 		punSARTI,A4		* Cargamos el puntero con el que vamos a hacer la comprobación
-		MOVE.L 		buffSB,A3		* Cargamos fin de buffer
-		CMP.L 		A2,A4			* Lleno
-		BNE 		BU_RAL			* Si son distintos seguimos.
-		CMP.B		#01,emptySA		* Comparamos el flag
-		BNE			BU_RAL			* Si no es igual seguimos
-		BRA			ES_VACIO		* Si son iguales, esta vacio, no hay que leer.
+		LEA 		buffSB,A3		* Cargamos fin de buffer
+		ADD.L 		#1,A2
+		CMP.L 		A2,A3
+		BEQ 		RESET_RA
+		SUB.L 		#1,A2
+		CMP.L 		A2,A4
+		BEQ ES_VACIO
 BU_RAL:	MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
 		MOVE.L		A2,punSA		* Actualizamos puntero
-		CMP.L		A2,A3			* Comparamos pun actual con fin buff
-		BNE			BU_RAV			* Si no son iguales seguimos
-		LEA			buffSA,A2
-		MOVE.L		A2,punSA		* Actualizo etiquita punSA
-BU_RAV:	CMP.L 		A2,A4			* Comparamos punteros
-		BNE 		LE_FIN			* Si no son iguales nos vamos.
-		MOVE.B		#01,emptySA		* Si son iguales ponemos el flag a 1.
 		BRA 		LE_FIN			* Nos vamos a fin.
 	
 
@@ -130,20 +125,15 @@ BUFF_TA:
 		MOVE.L		punPA,A4		* Cargamos el puntero para la comprobación
 		LEA			buffPB,A3		* Cargamos direccion de fin de buff
 		CMP.L 		A4,A2			* Comprobamos si el buff esta vacio
-		BNE 		BUFF_TAL		* Saltamos a lectura
-		CMP.B		#00,fullPA		* Flag a vacio?
-		BNE 		BUFF_TAL		* Saltamos a lectura
-		BRA			ES_VACIO		* vacio
-BUFF_TAL:MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y avanzamos el puntero.
-		MOVE.L 		A2,punPARTI		* Actualizamos el puntero despues de la escritura
-		CMP.L		A2,A3 			* Comparamos.
-		BNE 		BUFF_TAV		* Si no son iguales seguimos.
-		LEA 		buffPA,A2		* Si son iguales cargamos la dir del buff para reset.
-		MOVE.L		A2,punPARTI		* Ponemos el puntero al principio del buff.
-BUFF_TAV:CMP.L 		A4,A2			* Comprobamos si el buff esta vacio
-		BNE			LE_FIN			* Si no son iguales nos vamos.
-		MOVE.B		#00,fullPA		* Si son iguales, ponemos el flag a 1 
-		BRA			LE_FIN			* Nos vamos
+		ADD.L 		#1,A2
+		CMP.L 		A2,A3
+		BEQ 		RESET_RA
+		SUB.L 		#1,A2
+		CMP.L 		A2,A4
+		BEQ ES_VACIO
+BU_TAL:	MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
+		MOVE.L		A2,punPARTI		* Actualizamos puntero
+		BRA 		LE_FIN			* Nos vamos a fin.
 		
 LIN_B:	
 		BTST		#1,D0			* Comprobamos el bit 1
@@ -155,47 +145,57 @@ BUFF_RB:
 		MOVE.L 		punSB,A2		* Cargamos el puntero que vamos a utlizar	
 		MOVE.L		punSBRTI,A4		* Cargamos el puntero para la comprobación
 		LEA 		buffPA,A3		* Final de buffPA
-		CMP.L		A2,A4			* Comparamos los punteros rti y SCAN
-		BNE			BU_RBL			* Si no son iguales seguimos
-		CMP.B		#01,emptySB		* Comparamos el flag
-		BNE			BU_RBL			* Si no es 1 seguimos
-		BRA			ES_VACIO		* Si es 1 el buff esta vacio.
-BU_RBL:	MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y actualizamos.
-		MOVE.L		A2,punSB		* Actualizamos el puntero despues de la lectura
-		CMP.L 		A4,A3			* Hacemos la comprobación
-		BNE			BU_RBV			* Si no son iguales vamos a comprobacion final
-		LEA			buffSB,A2		* Ponemos al principio
-		MOVE.L		A2,punSB		* Actualizamos la etiqueta punsb
-BU_RBV: CMP.L		A2,A4			* Comparamos, para ver si hay que actualizar el flag
-		BNE 		LE_FIN			* Si no son iguales nos vamos.
-		MOVE.B		#01,emptySB		* Ponemos el falg a 1 si los punteros son iguales
-		BRA 		LE_FIN			* Nos vamos
+		ADD.L 		#1,A2
+		CMP.L 		A2,A3
+		BEQ 		RESET_RA
+		SUB.L 		#1,A2
+		CMP.L 		A2,A4
+		BEQ ES_VACIO
+BU_RBL:	MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
+		MOVE.L		A2,punSB		* Actualizamos puntero
+		BRA 		LE_FIN			* Nos vamos a fin.
 		
 BUFF_TB:
 		MOVE.L 		punPBRTI,A2		* Cargamos el puntero que vamos a utlizar
 		MOVE.L		punPB,A4		* Cargamos el puntero para la comprobación
 		LEA 		finPB,A3		* Cargamos la dirección para la comprobación
-		CMP.L 		A4,A2			* Hacemos la comprobación
-		BNE			BUFF_TBL		* Si no son iguales vamos a leer
-		CMP.B		#00,fullPB		* Comparamos el flag
-		BNE			BUFF_TBL		* Si no es 1 vamos a leer
-		BRA			ES_VACIO		* Si es 1 esta vacio.
-BUFF_TBL:MOVE.B	   (A2)+,D0			* Metemos el caracter en D0 y avanzamos el puntero.
-		MOVE.L		A2,punPBRTI		* Actualizamos el puntero despues leer	
-		CMP.L		A2,A3			* Hacemos la comprobación
-		BNE			BUFF_TBV		* Si no son SEGUIMOS
-		LEA			buffPB,A2		* Si son iguales cargamos la dirección nueva del puntero.
-		MOVE.L		A2,punPBRTI		* Reseteamos el puntero.
-BUFF_TBV:CMP.L		A2,A4			* Comparamos punteros para ver si hay que actualizar flag
-		BNE			LE_FIN			* Si no son iguales salimos
-		MOVE.B		#00,fullPB		* si son iguales actualizamos el flag
-		BRA			LE_FIN			* Sale de LEECAR
+		ADD.L 		#1,A2
+		CMP.L 		A2,A3
+		BEQ 		RESET_RA
+		SUB.L 		#1,A2
+		CMP.L 		A2,A4
+		BEQ ES_VACIO
+BU_TBL:	MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
+		MOVE.L		A2,punPBRTI		* Actualizamos puntero
+		BRA 		LE_FIN			* Nos vamos a fin.
 		
+RESET_TA:
+		LEA buffPA,A5
+		MOVE.L A5,A2
+		BRA BU_RAL
+
+RESET_RA:
+		LEA buffSA,A5
+		MOVE.L A5,A2
+		BRA BU_TAL
+RESET_RB:
+		LEA buffSB,A5
+		MOVE.L A5,A2
+		BRA BU_RBL
+
+RESET_TB:
+		LEA buffPB,A5
+		MOVE.L A5,A2
+		BRA BU_TBL
+
+
+
 ES_VACIO:
 		MOVE.L		#$FFFFFFFF,D0	* Si no ERROR
 		BRA			LE_FIN
 LE_FIN:
-		MOVEM.L (A7)+,D1-D5/A0-A5	* RECUPERAMOS
+		*MOVEM.L (A7)+,D1-D5/A0-A5	* RECUPERAMOS
+		UNLK A6
 		RTS
 
 **************************** FIN LEECAR ******************************************************
@@ -203,7 +203,8 @@ LE_FIN:
 **************************** ESCCAR **********************************************************
 
 ESCCAR:
-		MOVEM.L		D1-D5/A0-A5,-(A7) * GUARDAMOS 
+		*MOVEM.L		D1-D5/A0-A5,-(A7) * GUARDAMOS 
+		LINK A6,#0
 		BTST		#0,D0			* Comprobamos el bit 0
 		BNE			LI_B			* Si es 1 Linea de transmision B
 		BTST		#0,D0			* Comprobamos el bit 0
@@ -217,100 +218,111 @@ LI_A:
 
 BU_RA:	MOVE.L		punSARTI,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L 		punSA,A4		* Cargamos el puntero de SCAN
-		LEA 		buffSB,A3		* Cargamos el final del buff
-		CMP.L		A2,A4			* Comparamos.
-		BNE			BU_RAN			* Si no son iguales vamos a escribir
-		CMP.B		#00,emptySA		* Si los punteros son iguales, comprobamos el valor del flag
-		BNE			BU_RAN			* Si no es 0 vamos a escribir
-		BRA			ES_LLENO		* Si es 0 esta lleno.
-BU_RAN:	MOVE.B		D1,(A2)+		* Metemos el caracter en A2 y lo avanzamos.
-		MOVE.L		A2,punSARTI		* Actualizamos puntero con nueva dirección	
-		MOVE.L 		#0,D0			* Metemos un 0 en D0, todo ha ido bien
-		CMP.L		A2,A3			* Comparamos para ver si hemos llegado al final
-		BNE			BU_RAF			* Si no son iguales vamos a la comprobacion del Final
-		LEA			buffSA,A2		* A2 dir de inicio de buffer
-		MOVE.L		A2,punSARTI		* Actualizamos etiqueta de buff
-BU_RAF: CMP.L		A2,A4			* Comparamos con puntero de lectura para ver si mod flag
-		BEQ			ES_FIN			* Si no, nos vamos
-		MOVE.B		#00,emptySA		* Si los punteros son iguales, actualizamos flag
-		BRA 		ES_FIN			* Salimos
+		LEA 		buffSB,A3		* Cargamos el final del buff		
+		ADD.L 		#1,A2
+		CMP.L 		A2,A3
+		BEQ			RST_RA
+		CMP.L 		A2,A4
+		BEQ 		ES_LLENO
+		SUB.L 		#1,A2
+CONT_RA:
+		MOVE.B 		D1,(A2)+
+		MOVE.L 		A2,punSARTI
+		CLR.L 		D0
+		BRA 		ES_FIN		
+		
 
 BU_TA:	MOVE.L		punPA,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L		punPARTI,A4		* Cargamos puntero de lectura
 		LEA			buffPB,A3		* Cargamos direccion de final de buff.
-		CMP.L		A2,A4			* Comparamos los punteros
-		BNE			BU_TAN			* Si no son iguales vamos a escribir
-		CMP.B		#01,fullPA		* Comprobamos el valore del flag
-		BNE			BU_TAN			* SI no es uno vamos a escribir
-		BRA			ES_LLENO		* SI es uno esta lleno
-BU_TAN:	MOVE.B	D1,(A2)+			* Metemos el caracter en D1 y lo avanzamos.		
-		MOVE.L 		#0,D0			* D0 a 0 por que no ha habido errores.
-		MOVE.L		A2,punPA		* Si no LLENO
-		CMP.L		A2,A3			* COmparamos punero con fin de buff
-		BNE			BU_TAF			* Si no es igual vamos a comprobacion final
-		LEA			buffPA,A2		* Si son iguales ponemos puntero a principio de buff
-		MOVE.L		A2,punPA		* Actualizamos valor de la etiqueta
-BU_TAF:	CMP			A2,A4			* Comparamos los valores del puntero.
-		BNE			ES_FIN			* Si no nos vamos.
-		MOVE.B		#01,fullPA		* Si si, actualizamos valor del flag
-		BRA			ES_FIN			* nos vamos
+		ADD.L 		#1,A2
+		CMP.L 		A2,A3
+		BEQ			RST_TA
+		CMP.L 		A2,A4
+		BEQ 		ES_LLENO
+		SUB.L 		#1,A2
+CONT_TA:
+		MOVE.B 		D1,(A2)+
+		MOVE.L 		A2,punPA
+		CLR.L 		D0
+		BRA 		ES_FIN		
 		
 LI_B:	
 		BTST		#1,D0			* Comprobamos el bit 1
 		BEQ			BU_RB			* Si es 0 selecciona el buff de recepción
 		BTST		#1,D0			* Comprobamos el bit 1
 		BNE			BU_TB			* Si es 1 selecciona buff de transmisión	
-
 BU_RB:	MOVE.L 		punSBRTI,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L		punSB,A4		* Cargamos la dirección para comprobar si los punteros son iguales.
 		LEA 		buffPA,A3		* Cargamos la direccion del fin de buff
-		CMP.L		A2,A4			* Comparamos punteros
-		BNE 		BU_RBN			* Si no son iguales vamos a escribir
-		CMP.B		#00,emptySB		* Comparamos valor de flag
-		BNE			BU_RBN			* SI no son iguales vamos a escribir
-		BRA			ES_LLENO		* SI flag 0 buff lleno.
-BU_RBN:	MOVE.B		D1,(A2)+		* Metemos el caracter en D1 y lo avanzamos.
-		MOVE.L 		#0,D0			* D0 a 0 por que no ha habido errores.			
-		MOVE.L		A2,punSBRTI		* Actualizamos el puntero	
-		CMP.L		A2,A3			* Comparamos con fin de buff
-		BNE			BU_RBF			* Si no son iguales vamos a comprobar al final
-		LEA			buffSB,A2		* Cargamos principio de buff
-		MOVE.L		A2,punSBRTI		* Actualizamos valor de etiqueta
-BU_RBF: CMP.L		A2,A4			* COmparamos punteros
-		BNE			ES_FIN			* Si no son iguales nos salimos
-		MOVE.B		#00,emptySB		* Si son iguales lo ponemos a 0
-		BRA			ES_FIN			* NOs salimos.
-			 
+		ADD.L 		#1,A2
+		CMP.L 		A2,A3
+		BEQ			RST_RB
+		CMP.L 		A2,A4
+		BEQ 		ES_LLENO
+		SUB.L 		#1,A2
+CONT_RB:
+		MOVE.B 		D1,(A2)+
+		MOVE.L 		A2,punSBRTI
+		CLR.L 		D0
+		BRA 		ES_FIN		
+
 BU_TB:
 		MOVE.L 		punPB,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L		punPBRTI,A4		* Cargamos la dirección para comprobar si estamos al final del buff.
 		LEA			finPB,A3		* Cargamos direccion de find e puntero
-		CMP.L		A2,A4			* Comparamos punero
-		BNE			BU_TBN			* SI no son iguales nos vamos a escribir
-		CMP.B		#01,fullPB		* Comparamos valor del flag
-		BNE			BU_TBN			* Si no son iguales vamos a escribir
-		BRA 		ES_LLENO		* Buff esta lleno
-BU_TBN:	MOVE.B		D1,(A2)+		* Metemos el caracter en D1 y actualizamos.
-		MOVE.L 		#0,D0			* D0 = 0 Si la ejecución no da errores
-		MOVE.L		A2,punPB		* Si no ERROR		
-		CMP.L 		A2,A3			* Comparamos.
-		BNE			BU_TBF			* Si no son iguales vamos a comprobacion final
-		LEA 		buffPB,A2		* Cargamos la direccion del principio del buffer
-		MOVE.L		A2,punPB		* Actualizamos valor de la etiqueta 
-BU_TBF:	CMP.L		A2,A4			* Comparamos los punteros
-		BNE			ES_FIN			* Si no son iguales salimos
-		MOVE.B		#01,fullPB		* Actualizas el punero
-		BRA  		ES_FIN			* fin
+		ADD.L 		#1,A2
+		CMP.L 		A2,A3
+		BEQ			RST_TB
+		CMP.L 		A2,A4
+		BEQ 		ES_LLENO
+		SUB.L #1,A2
+CONT_TB:
+		MOVE.B 		D1,(A2)+
+
+		MOVE.L 		A2,punPB
+		CLR.L 		D0
+		BRA 		ES_FIN		
+
+		**************
+
+
+RST_TA:
+		LEA buffPA,A5
+		MOVE.L A5,A2
+		CMP.L 		A2,A4
+		BEQ 		ES_LLENO
+		BRA CONT_TA		
+
+RST_RA:
+		LEA buffSA,A5
+		MOVE.L A5,A2
+		CMP.L 		A2,A4
+		BEQ 		ES_LLENO
+		BRA CONT_RA
+RST_RB:
+		LEA buffSB,A5
+		MOVE.L A5,A2
+		CMP.L 		A2,A4
+		BEQ 		ES_LLENO
+		BRA CONT_RB
+
+RST_TB:
+		LEA buffPB,A5
+		MOVE.L A5,A2
+		CMP.L 		A2,A4
+		BEQ 		ES_LLENO
+		BRA CONT_TB
 		
 ES_LLENO:
 		MOVE.L		#$FFFFFFFF,D0	* Si no ERROR
 		BRA			ES_FIN
 ES_FIN:
-		MOVEM.L (A7)+,D1-D5/A0-A5	* RECUPERAMOS
+		*MOVEM.L (A7)+,D1-D5/A0-A5	* RECUPERAMOS
+		UNLK A6
 		RTS
 		
-**************************** ESCCAR ************************************************************	
-		
+**************************** ESCCAR ************************************************************
 **************************** SCAN ************************************************************
 SCAN:	LINK		A6,#0
 		MOVE.L		8(A6),A1		* Dir. del buffer.
@@ -362,6 +374,8 @@ SC_BB:
 SCAN_FIN:
 		UNLK		A6
 		RTS  
+
+
 		
 ******************************* FIN SCAN *****************************************************
 ****************************  PRINT  *********************************************************
@@ -525,8 +539,8 @@ RTI_FIN:
 	CONTC:  DC.W    0					* Contador de caracteres a imprimir
 	DESA: 	EQU 	0					* Descriptor l ́ınea A
 	DESB: 	EQU 	1					* Descriptor l ́ınea B
-	TAMBS:  EQU     30					* Tama~no de bloque para SCAN 
-	TAMBP:  EQU     7				* Tama~no de bloque para PRINT
+	TAMBS:  EQU     2					* Tama~no de bloque para SCAN 
+	TAMBP:  EQU     2				* Tama~no de bloque para PRINT
 
 
  * Manejadores de excepciones
@@ -586,3 +600,7 @@ ILLEGAL_IN:		BREAK
 PRIV_VIOLT:		BREAK
 				NOP					* Privilege violation handler
 **************************** FIN PROGRAMAS PRINCIPALES ******************************************		
+
+
+*$BSVC/68kasm -la es_int_2810.s
+*$BSVC/bsvc /usr/local/bsvc/samples/m68000/practica.setup
