@@ -7,7 +7,7 @@
 **************************
         ORG     $0
         DC.L    $8000         * Pila
-        DC.L    PR12     	  * PC
+        DC.L    INICIO     	  * PC
 		
 * Definición de equivalencias
 *********************************
@@ -108,6 +108,8 @@ LIN_A:
 BUFF_RA:
 		MOVE.L 		punSA,A2		* Cargamos el puntero que vamos a utlizar
 		MOVE.L 		punSARTI,A4		* Cargamos el puntero con el que vamos a hacer la comprobación
+		
+
 		LEA 		buffSB,A3		* Cargamos fin de buffer
 		ADD.L 		#1,A2
 		CMP.L 		A2,A3
@@ -324,7 +326,8 @@ ES_FIN:
 		
 **************************** ESCCAR ************************************************************
 **************************** SCAN ************************************************************
-SCAN:	LINK		A6,#0
+SCAN:
+		LINK		A6,#0
 		MOVE.L		8(A6),A1		* Dir. del buffer.
 		MOVE.W		12(A6),D1		* Descriptor --> D1
 		MOVE.W		14(A6),D2		* Tamaño --> D2
@@ -397,9 +400,8 @@ PRINT:  LINK		A6,#0
 PRINT_A:
 		CMP.L		D2,D4			* Comprobamos el numero de caracteres leido.
 		BEQ			PR_FIN			* Si es igual nos salimos.
-		MOVE.L		#0,D0			* Un 0 en D0 para asegurarnos que esta vacio
-		MOVE.L		#1,D0			*BSET.B 		#1,D0// BIT 0 = 0, BIT 1 = 1;
-		MOVE.L		#0,D1			* Limpiamos el D1
+
+		MOVE.L		#2,D0			*BSET.B 		#1,D0// BIT 0 = 0, BIT 1 = 1;
 		MOVE.B		(A1)+,D1		* D1 caracter a escribir por ESCCAR
 		BSR 		ESCCAR			* saltamos a ESCCAR
 		CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer lleno
@@ -420,9 +422,8 @@ FIN_PA:
 PRINT_B:
 		CMP.L		D2,D4			* Comprobamos el numero de caracteres leido.
 		BEQ			PR_FIN			* Si es igual nos salimos
-        MOVE.L		#0,D0			* Un 0 en D0 para asegurarnos que esta vacio
+        
         MOVE.B 		#3,D0			* BSET.B		#1,D0 //BIT 0 = 1, BIT 1 = 1;
-        MOVE.L		#0,D1			* Limpiamos d1.
         MOVE.B		(A1)+,D1		* D1 caracter a escribir por ESCCAR
         BSR			ESCCAR			* saltamos a ESCCAR
         CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer lleno
@@ -558,7 +559,7 @@ INICIO:
 BUCPR:  MOVE.W	#TAMBS,PARTAM		* Inicializa par ́ametro de tama~no
         MOVE.L  #BUFFER,PARDIR		*Par ́ametroBUFFER=comienzodelbuffer	
 OTRAL:  MOVE.W	PARTAM,-(A7)		*Tama~nodebloque
-        MOVE.W  #DESA,-(A7)			* Puerto A
+        MOVE.W  #DESB,-(A7)			* Puerto A
 		MOVE.L  PARDIR,-(A7)		*Direcci ́ondelectura
 ESPL:   BSR 	SCAN
         ADD.L   #8,A7				* Restablece la pila
@@ -574,7 +575,7 @@ OTRAE:  MOVE.W  #TAMBP,PARTAM		* Tama~no de escritura = Tama~no de bloque
 
 ESPE:
 		MOVE.W	PARTAM,-(A7) 		*Tama~no de escritura
-		MOVE.W 	#DESB,-(A7)			* Puerto B
+		MOVE.W 	#DESA,-(A7)			* Puerto B
         MOVE.L  PARDIR,-(A7)		*Direcci ́ondeescritura
         BSR     PRINT
         ADD.L   #8,A7				* Restablece la pila
@@ -609,29 +610,39 @@ PR12:
 	BSR INIT
 	MOVE.L #0,D0
 	MOVE.L #$64,D1
-	MOVE.L #$198,D5
+	MOVE.L #$200,D5
 	MOVE.L #0,D6
 BUCA: 
 	MOVE.L #$0,D1
 	BSR ESCCAR
+	MOVE.L #0,D0
 	MOVE.L #$1,D1
 	BSR ESCCAR
+	MOVE.L #0,D0
 	MOVE.L #$2,D1
 	BSR ESCCAR
+	MOVE.L #0,D0
 	MOVE.L #$3,D1
 	BSR ESCCAR
+	MOVE.L #0,D0
 	MOVE.L #$4,D1
 	BSR ESCCAR
+	MOVE.L #0,D0
 	MOVE.L #$5,D1
 	BSR ESCCAR
+	MOVE.L #0,D0
 	MOVE.L #$6,D1
 	BSR ESCCAR
+	MOVE.L #0,D0
 	MOVE.L #$7,D1
 	BSR ESCCAR
+	MOVE.L #0,D0
 	MOVE.L #$8,D1
 	BSR ESCCAR
+	MOVE.L #0,D0
 	MOVE.L #$9,D1
 	BSR ESCCAR
+	MOVE.L #0,D0
 	SUB.L #1,D5
 	CMP.L #0,D5
 	BEQ SAL2
@@ -639,9 +650,9 @@ BUCA:
 	BEQ SAL2
 	ADD.L #1,D6
 	BRA BUCA
-SAL2: MOVE.L #$100,D5
+SAL2: MOVE.L #$10,D5
 BUC2:
-
+	MOVE.L #0,D0
 	BSR LEECAR
 	SUB.L #1,D5
 	CMP.L #0,D5
@@ -650,4 +661,81 @@ BUC2:
 	BEQ SAL3
 	ADD.L #1,D6
 	BRA BUC2
-SAL3: BREAK
+SAL3:
+	MOVE.L #0,D0
+	MOVE.L #$10,D1
+	BSR ESCCAR
+	MOVE.L #0,D0
+	MOVE.L #$11,D1
+	BSR ESCCAR
+	MOVE.L #0,D0
+	MOVE.L #$22,D1
+	BSR ESCCAR
+	MOVE.L #0,D0
+	MOVE.L #$33,D1
+	BSR ESCCAR
+	MOVE.L #0,D0
+	MOVE.L #$44,D1
+	BSR ESCCAR
+	MOVE.L #0,D0
+	MOVE.L #$55,D1
+	BSR ESCCAR
+	MOVE.L #0,D0
+	MOVE.L #$66,D1
+	BSR ESCCAR
+	MOVE.L #0,D0
+	MOVE.L #$77,D1
+	BSR ESCCAR
+	MOVE.L #0,D0
+	MOVE.L #$88,D1
+	BSR ESCCAR
+	MOVE.L #0,D0
+	MOVE.L #$99,D1
+	BSR ESCCAR
+	MOVE.L #$2000,D5
+	BRA SAL4
+SAL4:
+	
+	MOVE.L #0,D0
+	BSR LEECAR
+	SUB.L #1,D5
+	CMP.L #0,D5
+	BEQ SAL5
+	CMP.L #$FFFFFFFF,D0
+	BEQ SAL5
+	ADD.L #1,D6
+	BRA SAL4
+SAL5:
+	BREAK
+
+
+PRSCAN:
+	BSR INIT
+	MOVE.L #0,D0
+	LEA buffSA,A1
+	MOVE.L punSARTI,A2
+	MOVE.B #$12,(A2)+
+	MOVE.B #$34,(A2)+
+	MOVE.B #$56,(A2)+
+	MOVE.B #$78,(A2)+
+	MOVE.B #$90,(A2)+
+	MOVE.L A2,punSARTI
+	MOVE.W #7,-(A7)
+	MOVE.W #0,-(A7)
+	MOVE.L #$4008,-(A7)
+
+	BSR SCAN
+	MOVE.L punSA,A4
+
+	BREAK
+
+	ORG $4008
+BUFFERPr	DC.B	$a,$30,$31,$32,$33,$34,$a,$34,$35,$36
+
+PRPRINT:
+	BSR INIT
+	MOVE.W #10,-(A7)
+	MOVE.W #0,-(A7)
+	MOVE.L #$4008,-(A7)
+	BSR PRINT 
+	BREAK
