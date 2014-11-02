@@ -7,7 +7,7 @@
 **************************
         ORG     $0
         DC.L    $8000         * Pila
-        DC.L    INICIO     	  * PC
+        DC.L    PR12     	  * PC
 		
 * Definición de equivalencias
 *********************************
@@ -38,10 +38,10 @@ punSARTI:		DS.B	4
 punSBRTI:		DS.B	4
 punPARTI:		DS.B	4
 punPBRTI:		DS.B	4			
-buffSA:			DS.B	2000
-buffSB:			DS.B	2000
-buffPA:			DS.B	2000
-buffPB:			DS.B	2000
+buffSA:			DS.B	2001
+buffSB:			DS.B	2001
+buffPA:			DS.B	2001
+buffPB:			DS.B	2001
 finPB:			DS.B	4
 emptySA:		DS.B	1
 emptySB:		DS.B	1
@@ -604,3 +604,50 @@ PRIV_VIOLT:		BREAK
 
 *$BSVC/68kasm -la es_int_2810.s
 *$BSVC/bsvc /usr/local/bsvc/samples/m68000/practica.setup
+
+PR12:
+	BSR INIT
+	MOVE.L #0,D0
+	MOVE.L #$64,D1
+	MOVE.L #$198,D5
+	MOVE.L #0,D6
+BUCA: 
+	MOVE.L #$0,D1
+	BSR ESCCAR
+	MOVE.L #$1,D1
+	BSR ESCCAR
+	MOVE.L #$2,D1
+	BSR ESCCAR
+	MOVE.L #$3,D1
+	BSR ESCCAR
+	MOVE.L #$4,D1
+	BSR ESCCAR
+	MOVE.L #$5,D1
+	BSR ESCCAR
+	MOVE.L #$6,D1
+	BSR ESCCAR
+	MOVE.L #$7,D1
+	BSR ESCCAR
+	MOVE.L #$8,D1
+	BSR ESCCAR
+	MOVE.L #$9,D1
+	BSR ESCCAR
+	SUB.L #1,D5
+	CMP.L #0,D5
+	BEQ SAL2
+	CMP.L #$FFFFFFFF,D0
+	BEQ SAL2
+	ADD.L #1,D6
+	BRA BUCA
+SAL2: MOVE.L #$100,D5
+BUC2:
+
+	BSR LEECAR
+	SUB.L #1,D5
+	CMP.L #0,D5
+	BEQ SAL3
+	CMP.L #$FFFFFFFF,D0
+	BEQ SAL3
+	ADD.L #1,D6
+	BRA BUC2
+SAL3: BREAK
