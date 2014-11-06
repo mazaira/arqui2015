@@ -1,6 +1,6 @@
 *------------------AUTORES------------------*
 *       David Páez Alderete (q080063)   	*
-*       Jose Mascaró Perez (q080087)		*
+*       Alberto Martin Mazaira (s100231)	*
 *-------------------------------------------*
 
 * Inicializa el SP y el PC
@@ -90,33 +90,30 @@ INIT:
 **************************** FIN INIT *********************************************************
 **************************** LEECAR **********************************************************
 
-LEECAR:
-		*MOVEM.L		D1-D5/A0-A5,-(A7) * GUARDAMOS 		
+LEECAR:	
 		LINK		A6,#0
-		BTST		#0,D0			* Comprobamos el bit 0
-		BNE			LIN_B			* Si es 1 Linea de transmision B 
-		BTST		#0,D0			* Comprobamos el bit 0
-		BEQ 		LIN_A			* Si es 0 Linea de transmisión 			
-
-LIN_A:	
-		BTST		#1,D0			* Comprobamos el bit 1
-		BEQ			BUFF_RA			* Si es 0 selecciona el buff de recepción
-		BTST		#1,D0			* Comprobamos el bit 1
-		BNE			BUFF_TA			* Si es 1 selecciona buff de transmisión	
+		CMP.L 		#0,D0
+		BEQ 		BUFF_RA
+		CMP.L 		#1,D0
+		BEQ 		BUFF_RB
+		CMP.L 		#2,D0
+		BEQ			BUFF_TA
+		CMP.L 		#3,D0
+		BEQ 		BUFF_TB
+		MOVE.L 		#$FFFFFFFF,D0
+		BRA 		LE_FIN
 
 
 BUFF_RA:
 		MOVE.L 		punSA,A2		* Cargamos el puntero que vamos a utlizar
-		MOVE.L 		punSARTI,A4		* Cargamos el puntero con el que vamos a hacer la comprobación
-		
-
+		MOVE.L 		punSARTI,A4		* Cargamos el puntero con el que vamos a hacer la comprobación		
 		LEA 		buffSB,A3		* Cargamos fin de buffer
 		ADD.L 		#1,A2
 		CMP.L 		A2,A3
 		BEQ 		RESET_RA
 		SUB.L 		#1,A2
 		CMP.L 		A2,A4
-		BEQ ES_VACIO
+		BEQ 		ES_VACIO
 BU_RAL:	MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
 		MOVE.L		A2,punSA		* Actualizamos puntero
 		BRA 		LE_FIN			* Nos vamos a fin.
@@ -132,16 +129,10 @@ BUFF_TA:
 		BEQ 		RESET_RA
 		SUB.L 		#1,A2
 		CMP.L 		A2,A4
-		BEQ ES_VACIO
+		BEQ 		ES_VACIO
 BU_TAL:	MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
 		MOVE.L		A2,punPARTI		* Actualizamos puntero
 		BRA 		LE_FIN			* Nos vamos a fin.
-		
-LIN_B:	
-		BTST		#1,D0			* Comprobamos el bit 1
-		BEQ			BUFF_RB			* Si es 0 selecciona el buff de recepción
-		BTST		#1,D0			* Comprobamos el bit 1
-		BNE			BUFF_TB			* Si es 1 selecciona buff de transmisión	
 
 BUFF_RB:
 		MOVE.L 		punSB,A2		* Cargamos el puntero que vamos a utlizar	
@@ -196,7 +187,6 @@ ES_VACIO:
 		MOVE.L		#$FFFFFFFF,D0	* Si no ERROR
 		BRA			LE_FIN
 LE_FIN:
-		*MOVEM.L (A7)+,D1-D5/A0-A5	* RECUPERAMOS
 		UNLK A6
 		RTS
 
@@ -205,18 +195,17 @@ LE_FIN:
 **************************** ESCCAR **********************************************************
 
 ESCCAR:
-		*MOVEM.L		D1-D5/A0-A5,-(A7) * GUARDAMOS 
-		LINK A6,#0
-		BTST		#0,D0			* Comprobamos el bit 0
-		BNE			LI_B			* Si es 1 Linea de transmision B
-		BTST		#0,D0			* Comprobamos el bit 0
-		BEQ 		LI_A			* Si es 0 Linea de transmisión A			
-
-LI_A:	
-		BTST		#1,D0			* Comprobamos el bit 1
-		BEQ			BU_RA			* Si es 0 selecciona el buff de recepción
-		BTST		#1,D0			* Comprobamos el bit 1
-		BNE			BU_TA			* Si es 1 selecciona buff de transmisión	
+		LINK		A6,#0
+		CMP.L 		#0,D0
+		BEQ 		BU_RA
+		CMP.L 		#1,D0
+		BEQ 		BU_RB
+		CMP.L 		#2,D0
+		BEQ			BU_TA
+		CMP.L 		#3,D0
+		BEQ 		BU_TB
+		MOVE.L 		#$FFFFFFFF,D0
+		BRA 		ES_FIN			
 
 BU_RA:	MOVE.L		punSARTI,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L 		punSA,A4		* Cargamos el puntero de SCAN
@@ -249,11 +238,6 @@ CONT_TA:
 		CLR.L 		D0
 		BRA 		ES_FIN		
 		
-LI_B:	
-		BTST		#1,D0			* Comprobamos el bit 1
-		BEQ			BU_RB			* Si es 0 selecciona el buff de recepción
-		BTST		#1,D0			* Comprobamos el bit 1
-		BNE			BU_TB			* Si es 1 selecciona buff de transmisión	
 BU_RB:	MOVE.L 		punSBRTI,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L		punSB,A4		* Cargamos la dirección para comprobar si los punteros son iguales.
 		LEA 		buffPA,A3		* Cargamos la direccion del fin de buff
@@ -280,8 +264,9 @@ BU_TB:
 		BEQ 		ES_LLENO
 		SUB.L #1,A2
 CONT_TB:
+		CMP.B 		#$FF,D1
+		BEQ 		ES_FIN
 		MOVE.B 		D1,(A2)+
-
 		MOVE.L 		A2,punPB
 		CLR.L 		D0
 		BRA 		ES_FIN		
@@ -320,7 +305,6 @@ ES_LLENO:
 		MOVE.L		#$FFFFFFFF,D0	* Si no ERROR
 		BRA			ES_FIN
 ES_FIN:
-		*MOVEM.L (A7)+,D1-D5/A0-A5	* RECUPERAMOS
 		UNLK A6
 		RTS
 		
@@ -332,7 +316,6 @@ SCAN:
 		MOVE.W		12(A6),D1		* Descriptor --> D1
 		MOVE.W		14(A6),D2		* Tamaño --> D2
 		MOVE.L		#0,D4			* Inicializo contador
-		MOVE.L		#0,D0
 		CMP.L		#0,D2			* Si tamaño = 0
 		BEQ			SCAN_FIN
 		CMP.B		#0,D1
@@ -400,7 +383,6 @@ PRINT:  LINK		A6,#0
 PRINT_A:
 		CMP.L		D2,D4			* Comprobamos el numero de caracteres leido.
 		BEQ			PR_FIN			* Si es igual nos salimos.
-
 		MOVE.L		#2,D0			*BSET.B 		#1,D0// BIT 0 = 0, BIT 1 = 1;
 		MOVE.B		(A1)+,D1		* D1 caracter a escribir por ESCCAR
 		BSR 		ESCCAR			* saltamos a ESCCAR
@@ -443,7 +425,89 @@ FIN_PB:
 PR_FIN:	MOVE.L D4,D0
 PRINT_FIN:
 		UNLK		A6
-		RTS      
+		RTS  
+
+
+****************************************************
+LINEA:
+		LINK A6,#0
+		BTST		#0,D0			* Comprobamos el bit 0
+		BNE			LINE_B			* Si es 1 Linea de transmision B
+		BTST		#0,D0			* Comprobamos el bit 0
+		BEQ 		LINE_A			* Si es 0 Linea de transmisión A			
+
+LINE_A:	
+		BTST		#1,D0			* Comprobamos el bit 1
+		BEQ			BUN_RA			* Si es 0 selecciona el buff de recepción
+		BTST		#1,D0			* Comprobamos el bit 1
+		BNE			BUN_TA			* Si es 1 selecciona buff de transmisión	
+LINE_B:	
+		BTST		#1,D0			* Comprobamos el bit 1
+		BEQ			BUN_RB			* Si es 0 selecciona el buff de recepción
+		BTST		#1,D0			* Comprobamos el bit 1
+		BNE			BUN_TB			* Si es 1 selecciona buff de transmisión	
+
+BUN_RA:	MOVE.L		punSARTI,A2		* Cargamos el puntero que vamos a utilizar
+		MOVE.L 		punSA,A4		* Cargamos el puntero de SCAN
+		LEA 		buffSB,A3		* Cargamos el final del buff
+		MOVE.L 		#0,D1
+SIGUERA:
+		CMP.L 		A2,A4
+		BEQ			OUT
+		ADD.L 		#1,A4
+		CMP.B		#$0D,(A4)
+		BEQ			OUT
+		ADD.L 		#1,D1
+		BRA 		SIGUERA
+
+BUN_TA:	MOVE.L		punPA,A2		* Cargamos el puntero que vamos a utilizar
+		MOVE.L		punPARTI,A4		* Cargamos puntero de lectura
+		LEA			buffPB,A3		* Cargamos direccion de final de buff.
+		MOVE.L 		#$2,D1
+SIGUETA:
+		CMP.L 		A2,A4
+		BEQ			OUT
+		ADD.L 		#1,A4
+		CMP.B		#$0D,(A4)
+		BEQ			OUT
+		ADD.L 		#1,D1
+		BRA 		SIGUETA
+
+BUN_RB:	MOVE.L 		punSBRTI,A2		* Cargamos el puntero que vamos a utilizar
+		MOVE.L		punSB,A4		* Cargamos la dirección para comprobar si los punteros son iguales.
+		LEA 		buffPA,A3		* Cargamos la direccion del fin de buff
+		MOVE.L 		#$2,D1
+SIGUERB:
+		CMP.L 		A2,A4
+		BEQ			OUT
+		ADD.L 		#1,A4
+		CMP.B		#$0D,(A4)
+		BEQ			OUT
+		ADD.L 		#1,D1
+		BRA 		SIGUERB
+
+BUN_TB:
+		MOVE.L 		punPB,A2		* Cargamos el puntero que vamos a utilizar
+		MOVE.L		punPBRTI,A4		* Cargamos la dirección para comprobar si estamos al final del buff.
+		LEA			finPB,A3		* Cargamos direccion de find e puntero
+		MOVE.L 		#$2,D1
+SIGUETB:
+		CMP.L 		A2,A4
+		BEQ			OUT
+		ADD.L 		#1,A4
+		CMP.B		#$0D,(A4)
+		BEQ			OUT
+		ADD.L 		#1,D1
+		BRA 		SIGUETB
+OUT:
+		MOVE.L D1,D0
+		UNLK A6
+		RTS
+
+
+************************************************************************************
+
+
 **************************** FIN PRINT ******************************************************
 **************************** RTI ************************************************************
 RTI:
@@ -559,7 +623,7 @@ INICIO:
 BUCPR:  MOVE.W	#TAMBS,PARTAM		* Inicializa par ́ametro de tama~no
         MOVE.L  #BUFFER,PARDIR		*Par ́ametroBUFFER=comienzodelbuffer	
 OTRAL:  MOVE.W	PARTAM,-(A7)		*Tama~nodebloque
-        MOVE.W  #DESB,-(A7)			* Puerto A
+        MOVE.W  #DESA,-(A7)			* Puerto A
 		MOVE.L  PARDIR,-(A7)		*Direcci ́ondelectura
 ESPL:   BSR 	SCAN
         ADD.L   #8,A7				* Restablece la pila
@@ -575,7 +639,7 @@ OTRAE:  MOVE.W  #TAMBP,PARTAM		* Tama~no de escritura = Tama~no de bloque
 
 ESPE:
 		MOVE.W	PARTAM,-(A7) 		*Tama~no de escritura
-		MOVE.W 	#DESA,-(A7)			* Puerto B
+		MOVE.W 	#DESB,-(A7)			* Puerto B
         MOVE.L  PARDIR,-(A7)		*Direcci ́ondeescritura
         BSR     PRINT
         ADD.L   #8,A7				* Restablece la pila
