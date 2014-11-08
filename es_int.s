@@ -7,7 +7,7 @@
 **************************
         ORG     $0
         DC.L    $8000         * Pila
-        DC.L    INICIO     	  * PC
+        DC.L    PR21     	  * PC
 		
 * Definición de equivalencias
 *********************************
@@ -450,57 +450,57 @@ LINE_B:
 BUN_RA:	MOVE.L		punSARTI,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L 		punSA,A4		* Cargamos el puntero de SCAN
 		LEA 		buffSB,A3		* Cargamos el final del buff
-		MOVE.L 		#0,D1
+		MOVE.L 		#0,D0
 SIGUERA:
 		CMP.L 		A2,A4
 		BEQ			OUT
-		ADD.L 		#1,A4
+		ADD.L 		#1,D0
 		CMP.B		#$0D,(A4)
 		BEQ			OUT
-		ADD.L 		#1,D1
+		ADD.L 		#1,A4		
 		BRA 		SIGUERA
 
 BUN_TA:	MOVE.L		punPA,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L		punPARTI,A4		* Cargamos puntero de lectura
 		LEA			buffPB,A3		* Cargamos direccion de final de buff.
-		MOVE.L 		#$2,D1
+		MOVE.L 		#0,D0
 SIGUETA:
 		CMP.L 		A2,A4
 		BEQ			OUT
-		ADD.L 		#1,A4
+		ADD.L 		#1,D0
 		CMP.B		#$0D,(A4)
 		BEQ			OUT
-		ADD.L 		#1,D1
+		ADD.L 		#1,A4
 		BRA 		SIGUETA
 
-BUN_RB:	MOVE.L 		punSBRTI,A2		* Cargamos el puntero que vamos a utilizar
+BUN_RB:	MOVE.L 	punSBRTI,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L		punSB,A4		* Cargamos la dirección para comprobar si los punteros son iguales.
 		LEA 		buffPA,A3		* Cargamos la direccion del fin de buff
-		MOVE.L 		#$2,D1
+		MOVE.L 		#0,D0
 SIGUERB:
 		CMP.L 		A2,A4
 		BEQ			OUT
-		ADD.L 		#1,A4
+		ADD.L 		#1,D0
 		CMP.B		#$0D,(A4)
 		BEQ			OUT
-		ADD.L 		#1,D1
+		ADD.L 		#1,A4		
 		BRA 		SIGUERB
 
 BUN_TB:
 		MOVE.L 		punPB,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L		punPBRTI,A4		* Cargamos la dirección para comprobar si estamos al final del buff.
 		LEA			finPB,A3		* Cargamos direccion de find e puntero
-		MOVE.L 		#$2,D1
+		MOVE.L 		#0,D0
 SIGUETB:
 		CMP.L 		A2,A4
 		BEQ			OUT
-		ADD.L 		#1,A4
+		ADD.L 		#1,D0
 		CMP.B		#$0D,(A4)
 		BEQ			OUT
-		ADD.L 		#1,D1
+		ADD.L 		#1,A4		
 		BRA 		SIGUETB
 OUT:
-		MOVE.L D1,D0
+		*MOVE.L D1,D0
 		UNLK A6
 		RTS
 
@@ -669,6 +669,85 @@ PRIV_VIOLT:		BREAK
 
 *$BSVC/68kasm -la es_int_2810.s
 *$BSVC/bsvc /usr/local/bsvc/samples/m68000/practica.setup
+
+PR17:
+	BSR INIT
+	MOVE.L #8,D1
+	MOVE.L punSARTI,A1
+	MOVE.B D1,(A1)+ 
+	MOVE.L A1,punSARTI
+	MOVE.L #0,D0
+	BSR LINEA
+	BREAK
+
+PR18: 
+	BSR INIT
+	MOVE.L #8,D1
+	MOVE.L punSBRTI,A1
+	MOVE.B D1,(A1)+ 
+	MOVE.L #$0D,D1
+	MOVE.B D1,(A1)+ 
+	MOVE.L A1,punSBRTI
+	MOVE.L #1,D0
+	BSR LINEA
+	BREAK
+
+PR19: 
+	BSR INIT
+	MOVE.L #1,D1
+	MOVE.L punPA,A1
+	MOVE.B D1,(A1)+ 
+	MOVE.L #2,D1
+	MOVE.B D1,(A1)+	
+	MOVE.L #3,D1
+	MOVE.B D1,(A1)+
+	MOVE.L #4,D1
+	MOVE.B D1,(A1)+
+	MOVE.L #5,D1
+	MOVE.B D1,(A1)+
+	MOVE.L #6,D1
+	MOVE.B D1,(A1)+
+	MOVE.L #7,D1
+	MOVE.B D1,(A1)+
+	MOVE.L #8,D1
+	MOVE.B D1,(A1)+
+	MOVE.L #9,D1	
+	MOVE.B D1,(A1)+
+	MOVE.L #$0D,D1
+	MOVE.B D1,(A1)+ 
+	MOVE.L A1,punPA
+	MOVE.L #2,D0
+	BSR LINEA
+	BREAK
+
+PR20: 
+	BSR INIT
+	MOVE.L #600,D5
+	MOVE.L punPB,A1
+	MOVE.L #8,D1
+BUC20:	MOVE.B D1,(A1)+ 
+	SUB    #1,D5
+	CMP.L  #0,D5
+	BNE    BUC20 
+	MOVE.L A1,punPB
+	MOVE.L #3,D0
+	BSR LINEA
+	BREAK
+
+PR21: 
+	BSR INIT
+	MOVE.L #600,D5
+	MOVE.L punSARTI,A1
+	MOVE.L #8,D1
+BUC21:	MOVE.B D1,(A1)+ 
+	SUB    #1,D5
+	CMP.L  #0,D5
+	BNE    BUC21 
+	MOVE.L A1,punSARTI
+	MOVE.L #0,D0
+	BSR LINEA
+	BREAK
+
 
 PR12:
 	BSR INIT
