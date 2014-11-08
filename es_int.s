@@ -7,7 +7,7 @@
 **************************
         ORG     $0
         DC.L    $8000         * Pila
-        DC.L    PR21     	  * PC
+        DC.L    PR22     	  * PC
 		
 * Definición de equivalencias
 *********************************
@@ -747,6 +747,42 @@ BUC21:	MOVE.B D1,(A1)+
 	MOVE.L #0,D0
 	BSR LINEA
 	BREAK
+
+PR22:
+	BSR INIT
+	MOVE.L #0,D2
+	MOVE.L #1500,D5
+	MOVE.L punPB,A1
+	MOVE.L #8,D1
+BUC22:	MOVE.L #3,D0
+	BSR ESCCAR
+	SUB    #1,D5
+	CMP.L  #0,D5
+	BNE BUC22
+	MOVE.L #1500,D5
+BUC222:	MOVE.L #3,D0
+	BSR LEECAR
+	SUB #1,D5
+	CMP.L #0,D5
+	BNE BUC222
+	MOVE.L #1000,D5
+	MOVE.L #88,D1
+BUC223:	MOVE.L #3,D0
+	BSR ESCCAR
+	SUB    #1,D5
+	CMP.L  #0,D5
+	BNE BUC223
+	MOVE.L #1000,D5
+	MOVE.L #0,D2
+BUC224:	MOVE.L #3,D0
+	BSR LEECAR
+	SUB #1,D5
+	ADD.L #1,D2
+	CMP.L #0,D5
+	BNE BUC224
+	BREAK
+
+	
 
 
 PR12:
