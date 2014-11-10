@@ -7,7 +7,7 @@
 **************************
         ORG     $0
         DC.L    $8000         * Pila
-        DC.L    PR22     	  * PC
+        DC.L    INICIO   	  * PC
 		
 * Definición de equivalencias
 *********************************
@@ -46,7 +46,8 @@ finPB:			DS.B	4
 emptySA:		DS.B	1
 emptySB:		DS.B	1
 fullPA:			DS.B	1
-fullPB:			DS.B	1
+*fullPB:			DS.B	1
+flagSalto: 		DS.B  	1
 
 IMRcopia:
 		DS.B	2
@@ -83,7 +84,7 @@ INIT:
 		LEA				buffPB,A1			* Dirección de buffPB -> A1
 		MOVE.L			A1,punPB			* punPB apunta al primero del buffPB
 		MOVE.L			A1,punPBRTI			* puntero para la RTI
-		MOVE.B			#0,fullPB			* El buffPB inicialmente no está lleno
+		*MOVE.B			#0,fullPB			* El buffPB inicialmente no está lleno
 		LEA				finPB,A1			* Dirección fin de buffPB -> A1
 		MOVE.L			A1,finPB			* finPB apunta al último elemento del buffPB
         RTS
@@ -318,6 +319,10 @@ SCAN:
 		MOVE.L		#0,D4			* Inicializo contador
 		CMP.L		#0,D2			* Si tamaño = 0
 		BEQ			SCAN_FIN
+		*BSR 		LINEA
+		*CMP.L 		#0,D0
+		*BEQ 		SCAN_FIN
+		*MOVE.L 		D0,D2
 		CMP.B		#0,D1
 		BEQ			SCAN_A			* Si descriptor = 0 lee de A
 		CMP.B		#1,D1
@@ -365,6 +370,8 @@ SCAN_FIN:
 		
 ******************************* FIN SCAN *****************************************************
 ****************************  PRINT  *********************************************************
+ 
+
 PRINT:  LINK		A6,#0
 		MOVE.L		8(A6),A1		* Dirección del buffer.
 		MOVE.W		12(A6),D1		* Descriptor --> D1
@@ -385,9 +392,14 @@ PRINT_A:
 		BEQ			PR_FIN			* Si es igual nos salimos.
 		MOVE.L		#2,D0			*BSET.B 		#1,D0// BIT 0 = 0, BIT 1 = 1;
 		MOVE.B		(A1)+,D1		* D1 caracter a escribir por ESCCAR
+		CMP.B 		#$0D,D1
+		BEQ 		FLAGA
+CONT_PRA:
 		BSR 		ESCCAR			* saltamos a ESCCAR
 		CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer lleno
 		BEQ			PR_FIN			* Nos salimos
+		CMP.B 	 	#01,flagSalto
+		BEQ 		PR_FIN
 		ADD.L		#1,D4			* Contador ++
 		CMP.W		D2,D4			* Comparamos con nº de car. a escribir.
 		BNE			PRINT_A			* Si no son iguales, vamos a comprobar los punteros para seguir.
@@ -407,9 +419,14 @@ PRINT_B:
         
         MOVE.B 		#3,D0			* BSET.B		#1,D0 //BIT 0 = 1, BIT 1 = 1;
         MOVE.B		(A1)+,D1		* D1 caracter a escribir por ESCCAR
+        *CMP.B 		#$0D,D1
+		*BEQ 		FLAGB
+CONT_PRB:
         BSR			ESCCAR			* saltamos a ESCCAR
         CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer lleno
 		BEQ			PR_FIN			* 
+		CMP.B 	 	#01,flagSalto
+		BEQ 		PR_FIN
 		ADD.L		#1,D4			* Contador ++
 		CMP.L		D2,D4			* Comparamos con nº de car. a escribir.
 		BNE			PRINT_B		* Si no son iguales, vamos a comprobar los punteros para seguir.
@@ -421,8 +438,18 @@ FIN_PB:
 		MOVE.B		IMRcopia,IMR	* Actualizamos IMR
 		MOVE.W		#$2000,SR		* Permitimos de nuevo las interrupciones        
 		BRA			PR_FIN
-		
-PR_FIN:	MOVE.L D4,D0
+
+FLAGA:
+		MOVE.B 		#01,flagSalto
+		BRA CONT_PRA
+
+FLAGB:
+		MOVE.B 		#01,flagSalto
+		BRA CONT_PRB
+
+PR_FIN:	
+		MOVE.B 		#00,flagSalto
+		MOVE.L D4,D0
 PRINT_FIN:
 		UNLK		A6
 		RTS  
@@ -430,7 +457,7 @@ PRINT_FIN:
 
 ****************************************************
 LINEA:
-		LINK A6,#0
+		LINK 		A6,#0
 		BTST		#0,D0			* Comprobamos el bit 0
 		BNE			LINE_B			* Si es 1 Linea de transmision B
 		BTST		#0,D0			* Comprobamos el bit 0
@@ -538,6 +565,8 @@ T_RDY_A:
 		BSR 		LEECAR			* Salto a leecar.
 		CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer vacio
 		BEQ 		FIN_TA			* Si error fin.
+		*CMP.B 		#$0D,D0
+		*BEQ 		RCA_RTI
 		MOVE.B		D0,TBA			* Introducimos el caracter en la linea A de transmisión.	
 		BRA 		RTI_FIN			* Si son iguales hemos terminado
 
@@ -554,6 +583,8 @@ T_RDY_B:
 		BSR 		LEECAR			* Salto a LEECAR
 		CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer vacio
 		BEQ			FIN_TB			* Si error, fin.
+		*CMP.B 		#$0D,D0
+		*BEQ 		RCB_RTI
 		MOVE.B 		D0,TBB			* Introducimos el caracter en la linea B de transmisión.
 		BRA 		RTI_FIN			*
 		
@@ -578,6 +609,16 @@ R_RDY_B:
 		BSET		#0,D0			* BIT 0 = 1
 		BSR			ESCCAR			* Vamos a rutina ESCCAR
 		BRA			RTI_FIN			* si error fin.
+
+RCA_RTI:
+		MOVE.B 		#$0A,TBA
+		BRA 		RTI_FIN
+
+
+RCB_RTI:
+		MOVE.B 		#$0A,TBb
+		BRA 		RTI_FIN
+
 
 RTI_FIN:
 		MOVE.L		(A7)+,A4		* Restauramos los registros
@@ -604,8 +645,8 @@ RTI_FIN:
 	CONTC:  DC.W    0					* Contador de caracteres a imprimir
 	DESA: 	EQU 	0					* Descriptor l ́ınea A
 	DESB: 	EQU 	1					* Descriptor l ́ınea B
-	TAMBS:  EQU     2					* Tama~no de bloque para SCAN 
-	TAMBP:  EQU     2				* Tama~no de bloque para PRINT
+	TAMBS:  EQU     10					* Tama~no de bloque para SCAN 
+	TAMBP:  EQU     10				* Tama~no de bloque para PRINT
 
 
  * Manejadores de excepciones
@@ -665,9 +706,27 @@ ILLEGAL_IN:		BREAK
 PRIV_VIOLT:		BREAK
 				NOP					* Privilege violation handler
 **************************** FIN PROGRAMAS PRINCIPALES ******************************************		
+PRSCAN:
+	BSR INIT
+	MOVE.L #0,D0
+	LEA buffSA,A1
+	MOVE.L punSARTI,A2
+	MOVE.B #$12,(A2)+
+	MOVE.B #$34,(A2)+
+	MOVE.B #$56,(A2)+
+	MOVE.B #$78,(A2)+
+	MOVE.B #$0D,(A2)+
+	MOVE.L A2,punSARTI
+	MOVE.W #7,-(A7)
+	MOVE.W #0,-(A7)
+	MOVE.L #$4008,-(A7)
 
+	BSR SCAN
+	MOVE.L punSA,A4
 
-*$BSVC/68kasm -la es_int_2810.s
+	BREAK
+
+*$BSVC/68kasm -la es_int.s
 *$BSVC/bsvc /usr/local/bsvc/samples/m68000/practica.setup
 
 PR17:
@@ -888,25 +947,7 @@ SAL5:
 	BREAK
 
 
-PRSCAN:
-	BSR INIT
-	MOVE.L #0,D0
-	LEA buffSA,A1
-	MOVE.L punSARTI,A2
-	MOVE.B #$12,(A2)+
-	MOVE.B #$34,(A2)+
-	MOVE.B #$56,(A2)+
-	MOVE.B #$78,(A2)+
-	MOVE.B #$90,(A2)+
-	MOVE.L A2,punSARTI
-	MOVE.W #7,-(A7)
-	MOVE.W #0,-(A7)
-	MOVE.L #$4008,-(A7)
 
-	BSR SCAN
-	MOVE.L punSA,A4
-
-	BREAK
 
 	ORG $4008
 BUFFERPr	DC.B	$a,$30,$31,$32,$33,$34,$a,$34,$35,$36
