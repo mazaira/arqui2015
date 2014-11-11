@@ -330,9 +330,11 @@ SCAN:
 		MOVE.L		#$FFFFFFFF,D0	* Si no ERROR
 		BRA			SCAN_FIN		* y sale de SCAN
 		
-
-SCAN_A:	
-		CMP.L		D4,D2			* Compruebo contadores
+SCAN_A: BSR 		LINEA			* Cuento el n de carac en la LINEA --> N
+		CMP.B 		D0,D2			* Comparo con el tamaño
+		BGT			SCR_F			* Si es mayor me voy
+		MOVE.L		D0,D2			* si no leo N carac.
+SC_A:	CMP.L		D4,D2			* Compruebo contadores
 		BEQ			SC_AA			* Si son iguales nos salimos
 		MOVE.L		#0,D0			* Un 0 en D0 para asegurarnos que esta vacio	
 		BSR 		LEECAR			* Saltamos a leecar con los dos bits a 0.
@@ -340,14 +342,19 @@ SCAN_A:
 		BEQ			SC_AA			* Nos salimos si error.
 		MOVE.B		D0,(A1)+		* El caracter leido,D0, lo metemos en A1
 		ADD.L		#1,D4			* +1 en contador.
-		BRA			SCAN_A			* Vuelvo a Scan
+		BRA			SC_A			* Vuelvo a Scan
 		
 SC_AA:
 		MOVE.L		D4,D0			* Ponemos el contador en D0, indica el nº de caracteres leidos.
 		BRA			SCAN_FIN		* FIN
+	
+
 		
-SCAN_B:
-		CMP.L		D4,D2			* Compruebo contadores
+SCAN_B: BSR 		LINEA			* Cuento el n de carac en la LINEA --> N
+		CMP.B 		D0,D2			* Comparo con el tamaño
+		BGT			SCR_F			* Si es mayor me voy
+		MOVE.L		D0,D2			* si no leo N carac.
+SC_B:	CMP.L		D4,D2			* Compruebo contadores
 		BEQ			SC_BB			* Si son iguales nos salimos
 		MOVE.L		#0,D0			* Un 0 en D0 para asegurarnos que esta vacio
 		MOVE.B 		#1,D0			* 
@@ -356,12 +363,15 @@ SCAN_B:
 		BEQ			SC_BB			* Nos salimos si error.
 		MOVE.B		D0,(A1)+		* El caracter leido,D0, lo metemos en A.
 		ADD.L		#1,D4			* +1 en contador.
-		BRA			SCAN_B			* Vuelvo a Scan
+		BRA			SC_B			* Vuelvo a Scan
 
 SC_BB:
 		MOVE.L		D4,D0			* Ponemos el contador en D0, indica el nº de caracteres leidos.
 		BRA			SCAN_FIN		* FIN
 		
+SCR_F:  MOVE.B #0,D0
+		BRA SCAN_FIN
+
 SCAN_FIN:
 		UNLK		A6
 		RTS  
@@ -393,13 +403,11 @@ PRINT_A:
 		MOVE.L		#2,D0			*BSET.B 		#1,D0// BIT 0 = 0, BIT 1 = 1;
 		MOVE.B		(A1)+,D1		* D1 caracter a escribir por ESCCAR
 		CMP.B 		#$0D,D1
-		BEQ 		FLAGA
+		BEQ 		CARR_A
 CONT_PRA:
 		BSR 		ESCCAR			* saltamos a ESCCAR
 		CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer lleno
 		BEQ			PR_FIN			* Nos salimos
-		CMP.B 	 	#01,flagSalto
-		BEQ 		PR_FIN
 		ADD.L		#1,D4			* Contador ++
 		CMP.W		D2,D4			* Comparamos con nº de car. a escribir.
 		BNE			PRINT_A			* Si no son iguales, vamos a comprobar los punteros para seguir.
@@ -415,18 +423,15 @@ FIN_PA:
 
 PRINT_B:
 		CMP.L		D2,D4			* Comprobamos el numero de caracteres leido.
-		BEQ			PR_FIN			* Si es igual nos salimos
-        
+		BEQ			PR_FIN			* Si es igual nos salimos   
         MOVE.B 		#3,D0			* BSET.B		#1,D0 //BIT 0 = 1, BIT 1 = 1;
         MOVE.B		(A1)+,D1		* D1 caracter a escribir por ESCCAR
-        *CMP.B 		#$0D,D1
-		*BEQ 		FLAGB
+        CMP.B 		#$0D,D1
+		BEQ 		CARR_B
 CONT_PRB:
         BSR			ESCCAR			* saltamos a ESCCAR
         CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer lleno
 		BEQ			PR_FIN			* 
-		CMP.B 	 	#01,flagSalto
-		BEQ 		PR_FIN
 		ADD.L		#1,D4			* Contador ++
 		CMP.L		D2,D4			* Comparamos con nº de car. a escribir.
 		BNE			PRINT_B		* Si no son iguales, vamos a comprobar los punteros para seguir.
@@ -439,6 +444,14 @@ FIN_PB:
 		MOVE.W		#$2000,SR		* Permitimos de nuevo las interrupciones        
 		BRA			PR_FIN
 
+CARR_A: BSR ESCCAR					* Es mejor hacer un esccar y salir directamente	e
+		FIN_PA						* s el mismo comportamiento que estabas haciendo tu.
+									* Pero si lo hacemos con flag nos la 
+								    * jugamos con la concurrencia.
+
+CARR_B: BSR ESCCAR					* En caso de que ESCCAR devuelva ffs nos da igual, por que salimos igualmente.
+		FIN_PB
+
 FLAGA:
 		MOVE.B 		#01,flagSalto
 		BRA CONT_PRA
@@ -448,7 +461,7 @@ FLAGB:
 		BRA CONT_PRB
 
 PR_FIN:	
-		MOVE.B 		#00,flagSalto
+		*MOVE.B 		#00,flagSalto
 		MOVE.L D4,D0
 PRINT_FIN:
 		UNLK		A6
@@ -616,7 +629,7 @@ RCA_RTI:
 
 
 RCB_RTI:
-		MOVE.B 		#$0A,TBb
+		MOVE.B 		#$0A,TBB
 		BRA 		RTI_FIN
 
 
