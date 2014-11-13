@@ -5,9 +5,9 @@
 
 * Inicializa el SP y el PC
 **************************
-         ORG     $0
-         DC.L    $8000         * Pila
-         DC.L    INICIO   	  * PC
+        ORG     $0
+        DC.L    $8000         * Pila
+        DC.L    INICIO  	  * PC
 		
 * Definición de equivalencias
 *********************************
@@ -70,18 +70,22 @@ INIT:
 		MOVE.L          #$100,A2			* $100 es la dirección siguiente al V.I.
 		MOVE.L          A1,(A2)				* Actualización de la dirección de la tabla de vectores
 		LEA				buffSA,A1			* Dirección de buffSA -> A1
+		ADD.L 			#1,A1
 		MOVE.L			A1,punSA			* punSA apunta al primero del buffSA
 		MOVE.L			A1,punSARTI			* puntero para la RTI
 		MOVE.B			#1,emptySA			* El buffSA inicialmente no está lleno
 		LEA				buffSB,A1			* Dirección de buffSB -> A1
+		ADD.L 			#1,A1
 		MOVE.L			A1,punSB			* punSB apunta al primero del buffSB
 		MOVE.L			A1,punSBRTI			* puntero para la RTI
 		MOVE.B			#1,emptySB			* El buffSB inicialmente no está lleno
 		LEA				buffPA,A1			* Dirección de buffPA -> A1
+		ADD.L 			#1,A1
 		MOVE.L			A1,punPA			* punPA apunta al primero del buffPA
 		MOVE.L			A1,punPARTI			* puntero para la RTI
 		MOVE.B			#0,fullPA			* El buffPA inicialmente no está lleno
 		LEA				buffPB,A1			* Dirección de buffPB -> A1
+		ADD.L 			#1,A1
 		MOVE.L			A1,punPB			* punPB apunta al primero del buffPB
 		MOVE.L			A1,punPBRTI			* puntero para la RTI
 		*MOVE.B			#0,fullPB			* El buffPB inicialmente no está lleno
@@ -109,13 +113,12 @@ BUFF_RA:
 		MOVE.L 		punSA,A2		* Cargamos el puntero que vamos a utlizar
 		MOVE.L 		punSARTI,A4		* Cargamos el puntero con el que vamos a hacer la comprobación		
 		LEA 		buffSB,A3		* Cargamos fin de buffer
-		ADD.L 		#1,A2
 		CMP.L 		A2,A3
 		BEQ 		RESET_RA
-		SUB.L 		#1,A2
 		CMP.L 		A2,A4
 		BEQ 		ES_VACIO
-BU_RAL:		MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
+BU_RAL:
+		MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
 		MOVE.L		A2,punSA		* Actualizamos puntero
 		BRA 		LE_FIN			* Nos vamos a fin.
 	
@@ -124,14 +127,12 @@ BUFF_TA:
 		MOVE.L 		punPARTI,A2		* Cargamos el puntero que vamos a utlizar
 		MOVE.L		punPA,A4		* Cargamos el puntero para la comprobación
 		LEA			buffPB,A3		* Cargamos direccion de fin de buff
-		CMP.L 		A4,A2			* Comprobamos si el buff esta vacio
-		ADD.L 		#1,A2
 		CMP.L 		A2,A3
-		BEQ 		RESET_RA
-		SUB.L 		#1,A2
+		BEQ 		RESET_TA
 		CMP.L 		A2,A4
 		BEQ 		ES_VACIO
-BU_TAL:		MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
+BU_TAL:
+		MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
 		MOVE.L		A2,punPARTI		* Actualizamos puntero
 		BRA 		LE_FIN			* Nos vamos a fin.
 
@@ -139,13 +140,12 @@ BUFF_RB:
 		MOVE.L 		punSB,A2		* Cargamos el puntero que vamos a utlizar	
 		MOVE.L		punSBRTI,A4		* Cargamos el puntero para la comprobación
 		LEA 		buffPA,A3		* Final de buffPA
-		ADD.L 		#1,A2
 		CMP.L 		A2,A3
-		BEQ 		RESET_RA
-		SUB.L 		#1,A2
+		BEQ 		RESET_RB
 		CMP.L 		A2,A4
-		BEQ ES_VACIO
-BU_RBL:		MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
+		BEQ 		ES_VACIO
+BU_RBL:
+		MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
 		MOVE.L		A2,punSB		* Actualizamos puntero
 		BRA 		LE_FIN			* Nos vamos a fin.
 		
@@ -153,25 +153,24 @@ BUFF_TB:
 		MOVE.L 		punPBRTI,A2		* Cargamos el puntero que vamos a utlizar
 		MOVE.L		punPB,A4		* Cargamos el puntero para la comprobación
 		LEA 		finPB,A3		* Cargamos la dirección para la comprobación
-		ADD.L 		#1,A2
 		CMP.L 		A2,A3
-		BEQ 		RESET_RA
-		SUB.L 		#1,A2
+		BEQ 		RESET_TB
 		CMP.L 		A2,A4
-		BEQ ES_VACIO
-BU_TBL:		MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
+		BEQ 		ES_VACIO
+BU_TBL:
+		MOVE.B		(A2)+,D0		* Metemos el caracter en D0 y lo avanzamos.
 		MOVE.L		A2,punPBRTI		* Actualizamos puntero
 		BRA 		LE_FIN			* Nos vamos a fin.
 		
 RESET_TA:
 		LEA buffPA,A5
 		MOVE.L A5,A2
-		BRA BU_RAL
+		BRA BU_TAL
 
 RESET_RA:
 		LEA buffSA,A5
 		MOVE.L A5,A2
-		BRA BU_TAL
+		BRA BU_RAL
 RESET_RB:
 		LEA buffSB,A5
 		MOVE.L A5,A2
@@ -208,47 +207,49 @@ ESCCAR:
 		MOVE.L 		#$FFFFFFFF,D0
 		BRA 		ES_FIN			
 
-BU_RA:		MOVE.L		punSARTI,A2		* Cargamos el puntero que vamos a utilizar
+BU_RA:	MOVE.L		punSARTI,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L 		punSA,A4		* Cargamos el puntero de SCAN
-		LEA 		buffSB,A3		* Cargamos el final del buff		
-		ADD.L 		#1,A2
+		LEA 		buffSB,A3		* Cargamos el final del buff				
 		CMP.L 		A2,A3
 		BEQ			RST_RA
+CONT_RA:
+		ADD.L 		#1,A2
 		CMP.L 		A2,A4
 		BEQ 		ES_LLENO
 		SUB.L 		#1,A2
-CONT_RA:
 		MOVE.B 		D1,(A2)+
 		MOVE.L 		A2,punSARTI
 		CLR.L 		D0
 		BRA 		ES_FIN		
 		
 
-BU_TA:		MOVE.L		punPA,A2		* Cargamos el puntero que vamos a utilizar
+BU_TA:	MOVE.L		punPA,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L		punPARTI,A4		* Cargamos puntero de lectura
 		LEA			buffPB,A3		* Cargamos direccion de final de buff.
-		ADD.L 		#1,A2
 		CMP.L 		A2,A3
 		BEQ			RST_TA
+CONT_TA:
+		ADD.L 		#1,A2
 		CMP.L 		A2,A4
 		BEQ 		ES_LLENO
 		SUB.L 		#1,A2
-CONT_TA:
+		CMP.B 		#$FF,D1
+		BEQ 		ES_FIN
 		MOVE.B 		D1,(A2)+
 		MOVE.L 		A2,punPA
 		CLR.L 		D0
 		BRA 		ES_FIN		
 		
-BU_RB:		MOVE.L 		punSBRTI,A2		* Cargamos el puntero que vamos a utilizar
+BU_RB:	MOVE.L 		punSBRTI,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L		punSB,A4		* Cargamos la dirección para comprobar si los punteros son iguales.
 		LEA 		buffPA,A3		* Cargamos la direccion del fin de buff
-		ADD.L 		#1,A2
 		CMP.L 		A2,A3
 		BEQ			RST_RB
+CONT_RB:
+		ADD.L 		#1,A2
 		CMP.L 		A2,A4
 		BEQ 		ES_LLENO
 		SUB.L 		#1,A2
-CONT_RB:
 		MOVE.B 		D1,(A2)+
 		MOVE.L 		A2,punSBRTI
 		CLR.L 		D0
@@ -258,13 +259,13 @@ BU_TB:
 		MOVE.L 		punPB,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L		punPBRTI,A4		* Cargamos la dirección para comprobar si estamos al final del buff.
 		LEA			finPB,A3		* Cargamos direccion de find e puntero
-		ADD.L 		#1,A2
 		CMP.L 		A2,A3
 		BEQ			RST_TB
+CONT_TB:
+		ADD.L 		#1,A2
 		CMP.L 		A2,A4
 		BEQ 		ES_LLENO
-		SUB.L #1,A2
-CONT_TB:
+		SUB.L 		#1,A2
 		CMP.B 		#$FF,D1
 		BEQ 		ES_FIN
 		MOVE.B 		D1,(A2)+
@@ -276,30 +277,22 @@ CONT_TB:
 
 
 RST_TA:
-		LEA buffPA,A5
-		MOVE.L A5,A2
-		CMP.L 		A2,A4
-		BEQ 		ES_LLENO
+		LEA 		buffPA,A5
+		MOVE.L 		A5,A2
 		BRA CONT_TA		
 
 RST_RA:
 		LEA buffSA,A5
 		MOVE.L A5,A2
-		CMP.L 		A2,A4
-		BEQ 		ES_LLENO
 		BRA CONT_RA
 RST_RB:
 		LEA buffSB,A5
 		MOVE.L A5,A2
-		CMP.L 		A2,A4
-		BEQ 		ES_LLENO
 		BRA CONT_RB
 
 RST_TB:
 		LEA buffPB,A5
 		MOVE.L A5,A2
-		CMP.L 		A2,A4
-		BEQ 		ES_LLENO
 		BRA CONT_TB
 		
 ES_LLENO:
@@ -330,31 +323,24 @@ SCAN:
 		MOVE.L		#$FFFFFFFF,D0	* Si no ERROR
 		BRA			SCAN_FIN		* y sale de SCAN
 		
-SCAN_A: BSR 	LINEA			* Cuento el n de carac en la LINEA --> N
-		CMP.B 		D2,D0			* Comparo con el tamaño
-		BGT		SCR_F			* Si es mayor me voy
-		MOVE.L		D0,D2			* si no leo N carac.
-SC_A:	CMP.L	D4,D2			* Compruebo contadores
-		BEQ		SC_AA			* Si son iguales nos salimos
+
+SCAN_A:	
+		CMP.L		D4,D2			* Compruebo contadores
+		BEQ			SC_AA			* Si son iguales nos salimos
 		MOVE.L		#0,D0			* Un 0 en D0 para asegurarnos que esta vacio	
 		BSR 		LEECAR			* Saltamos a leecar con los dos bits a 0.
 		CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer vacio
-		BEQ		SC_AA			* Nos salimos si error.
+		BEQ			SC_AA			* Nos salimos si error.
 		MOVE.B		D0,(A1)+		* El caracter leido,D0, lo metemos en A1
 		ADD.L		#1,D4			* +1 en contador.
-		BRA		SC_A			* Vuelvo a Scan
+		BRA			SCAN_A			* Vuelvo a Scan
 		
 SC_AA:
 		MOVE.L		D4,D0			* Ponemos el contador en D0, indica el nº de caracteres leidos.
-		BRA		SCAN_FIN		* FIN
-	
-
+		BRA			SCAN_FIN		* FIN
 		
-SCAN_B: BSR 	LINEA			* Cuento el n de carac en la LINEA --> N
-		CMP.B 		D2,D0			* Comparo con el tamaño
-		BGT		SCR_F			* Si es mayor me voy
-		MOVE.L		D0,D2			* si no leo N carac.
-SC_B:	CMP.L		D4,D2			* Compruebo contadores
+SCAN_B:
+		CMP.L		D4,D2			* Compruebo contadores
 		BEQ			SC_BB			* Si son iguales nos salimos
 		MOVE.L		#0,D0			* Un 0 en D0 para asegurarnos que esta vacio
 		MOVE.B 		#1,D0			* 
@@ -363,15 +349,12 @@ SC_B:	CMP.L		D4,D2			* Compruebo contadores
 		BEQ			SC_BB			* Nos salimos si error.
 		MOVE.B		D0,(A1)+		* El caracter leido,D0, lo metemos en A.
 		ADD.L		#1,D4			* +1 en contador.
-		BRA			SC_B			* Vuelvo a Scan
+		BRA			SCAN_B			* Vuelvo a Scan
 
 SC_BB:
 		MOVE.L		D4,D0			* Ponemos el contador en D0, indica el nº de caracteres leidos.
 		BRA			SCAN_FIN		* FIN
 		
-SCR_F:  	MOVE.B #0,D0
-		BRA SCAN_FIN
-
 SCAN_FIN:
 		UNLK		A6
 		RTS  
@@ -382,37 +365,35 @@ SCAN_FIN:
 ****************************  PRINT  *********************************************************
  
 
-PRINT:  	LINK		A6,#0
+PRINT:  LINK		A6,#0
 		MOVE.L		8(A6),A1		* Dirección del buffer.
 		MOVE.W		12(A6),D1		* Descriptor --> D1
 		MOVE.W		14(A6),D2		* Tamaño --> D2
 		MOVE.L		#0,D4			* Inicialización D4 = 0
 		MOVE.L		#0,D0			* Limpio D0
 		CMP.W		#0,D2			* Si tamaño = 0
-		BEQ		PRINT_FIN	
+		BEQ			PRINT_FIN	
 		CMP.W		#0,D1
-		BEQ		PRINT_A			* Si descriptor = 0 escribe en A
+		BEQ			PRINT_A			* Si descriptor = 0 escribe en A
 		CMP.W		#1,D1
-		BEQ		PRINT_B			* Si descriptor = 1 escribe en B
+		BEQ			PRINT_B			* Si descriptor = 1 escribe en B
 		MOVE.L		#$FFFFFFFF,D0	* Si no ERROR,
-		BRA		PRINT_FIN		* y sale de PRINT.
+		BRA			PRINT_FIN		* y sale de PRINT.
 		
 PRINT_A:
 		CMP.L		D2,D4			* Comprobamos el numero de caracteres leido.
-		BEQ		PR_FIN			* Si es igual nos salimos.
+		BEQ			PR_FIN			* Si es igual nos salimos.
 		MOVE.L		#2,D0			*BSET.B 		#1,D0// BIT 0 = 0, BIT 1 = 1;
 		MOVE.B		(A1)+,D1		* D1 caracter a escribir por ESCCAR
 		CMP.B 		#$0D,D1
-		BEQ 		CARR_A
-CONT_PRA:
+		BEQ 		FLAGA
 		BSR 		ESCCAR			* saltamos a ESCCAR
 		CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer lleno
-		BEQ		PR_FIN			* Nos salimos
+		BEQ			PR_FIN			* Nos salimos
 		ADD.L		#1,D4			* Contador ++
-		BRA 		PRINT_A		
-		*CMP.W		D2,D4			* Comparamos con nº de car. a escribir.
-		*BNE		PRINT_A			* Si no son iguales, vamos a comprobar los punteros para seguir.
-		*BRA		PR_FIN			* si son iguales nos vamos.
+		CMP.W		D2,D4			* Comparamos con nº de car. a escribir.
+		BNE			PRINT_A			* Si no son iguales, vamos a comprobar los punteros para seguir.
+		BRA			FIN_PA			* si son iguales nos vamos.
 
 
 FIN_PA:
@@ -420,46 +401,50 @@ FIN_PA:
 		BSET.B		#0,IMRcopia		* Habilitamos las interrupciones en A
 		MOVE.B		IMRcopia,IMR	* Actualizamos IMR
 		MOVE.W		#$2000,SR		* Permitimos de nuevo las interrupciones        
-		BRA		PR_FIN
+		BRA			PR_FIN
 
 PRINT_B:
 		CMP.L		D2,D4			* Comprobamos el numero de caracteres leido.
-		BEQ		PR_FIN			* Si es igual nos salimos   
-       		MOVE.B 		#3,D0			* BSET.B		#1,D0 //BIT 0 = 1, BIT 1 = 1;
-       		MOVE.B		(A1)+,D1		* D1 caracter a escribir por ESCCAR
-        	CMP.B 		#$0D,D1
-		BEQ 		CARR_B
-CONT_PRB:
-        	BSR		ESCCAR			* saltamos a ESCCAR
-        	CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer lleno
-		BEQ		PR_FIN			* 
+		BEQ			PR_FIN			* Si es igual nos salimos
+        
+        MOVE.B 		#3,D0			* BSET.B		#1,D0 //BIT 0 = 1, BIT 1 = 1;
+        MOVE.B		(A1)+,D1		* D1 caracter a escribir por ESCCAR
+        CMP.B 		#$0D,D1
+		BEQ 		FLAGB
+        BSR			ESCCAR			* saltamos a ESCCAR
+        CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer lleno
+		BEQ			PR_FIN			* 
 		ADD.L		#1,D4			* Contador ++
-		BRA 		PRINT_B
-		*CMP.L		D2,D4			* Comparamos con nº de car. a escribir.
-		*BNE		PRINT_B		* Si no son iguales, vamos a comprobar los punteros para seguir.
-		*BRA		PR_FIN			* Si son iguales salimos.
+		CMP.L		D2,D4			* Comparamos con nº de car. a escribir.
+		BNE			PRINT_B		* Si no son iguales, vamos a comprobar los punteros para seguir.
+		BRA			FIN_PB			* Si son iguales salimos.
 
 FIN_PB:
-        	MOVE.W		#$2700,SR		* Inhibimos interrupciones
+        MOVE.W		#$2700,SR		* Inhibimos interrupciones
 		BSET.B		#4,IMRcopia		* Habilitamos las interrupciones en A
 		MOVE.B		IMRcopia,IMR	* Actualizamos IMR
 		MOVE.W		#$2000,SR		* Permitimos de nuevo las interrupciones        
-		BRA		PR_FIN
+		BRA			PR_FIN
 
-CARR_A: 	BSR 		ESCCAR				* Es mejor hacer un esccar y salir directamente	es el mismo comportamiento que 								* estabas haciendo tu.
-		ADD.L		#1,D4		
-		BRA 		FIN_PA		 		* Pero si lo hacemos con flag nos la jugamos con la concurrencia.
+FLAGA:
+		BSR			ESCCAR
+		ADD.L		#1,D4			* Contador ++
+		BSR 		FIN_PA
 
-CARR_B: 	BSR 		ESCCAR				* En caso de que ESCCAR devuelva ffs nos da igual, por que salimos igualmente.
-		ADD.L		#1,D4		
-		BRA 		FIN_PB
+FLAGB:
+		BSR			ESCCAR
+		ADD.L		#1,D4			* Contador ++
+		BSR 		FIN_PB
 
-PR_FIN:		MOVE.L 		D4,D0
-PRINT_FIN:	UNLK		A6
+PR_FIN:	
+		
+		MOVE.L D4,D0
+PRINT_FIN:
+		UNLK		A6
 		RTS  
+**************************** FIN PRINT ******************************************************
 
-
-****************************************************
+**********************  LINEA  ******************************
 LINEA:
 		LINK 		A6,#0
 		BTST		#0,D0			* Comprobamos el bit 0
@@ -536,10 +521,10 @@ OUT:
 		RTS
 
 
-************************************************************************************
+****************************  FIN LINEA  ********************************************************
 
 
-**************************** FIN PRINT ******************************************************
+
 **************************** RTI ************************************************************
 RTI:
 		MOVE.W		D0,-(A7)		* Guardamos los registros utilizados en SCAN y PRINT
@@ -596,14 +581,14 @@ FIN_TB:
 		BCLR.B		#4,IMRcopia		* Deshabilitamos interrupciones en la linea A
 		MOVE.B		IMRcopia,IMR	* Actualizamos IMR
 		MOVE.L		#0,D0			* Limpiamos D0 al volver de D0
-		BRA		RTI_FIN			* Saltamos al final de la rti
+		BRA			RTI_FIN			* Saltamos al final de la rti
 
 R_RDY_A:
 		MOVE.L		#0,D1			* D1 = 0, para cargar el car a leer en un reg vacio.
 		MOVE.B		RBA,D1			* Cogemos el caracter del puerto de recepción
 		MOVE.L		#0,D0			* D0 = 0
-		BSR		ESCCAR			* Vamos a rutina ESCCAR
-		BRA		RTI_FIN			* Si error, fin.
+		BSR			ESCCAR			* Vamos a rutina ESCCAR
+		BRA			RTI_FIN			* Si error, fin.
 
 
 R_RDY_B:
@@ -611,8 +596,8 @@ R_RDY_B:
 		MOVE.B		RBB,D1			* Cogemos el caracter del puerto de recepción
 		MOVE.W		#0,D0			* Reseteamos D0
 		BSET		#0,D0			* BIT 0 = 1
-		BSR		ESCCAR			* Vamos a rutina ESCCAR
-		BRA		RTI_FIN			* si error fin.
+		BSR			ESCCAR			* Vamos a rutina ESCCAR
+		BRA			RTI_FIN			* si error fin.
 
 RCA_RTI:
 		MOVE.B 		#$0A,TBA
@@ -649,8 +634,8 @@ RTI_FIN:
 	CONTC:  DC.W    0					* Contador de caracteres a imprimir
 	DESA: 	EQU 	0					* Descriptor l ́ınea A
 	DESB: 	EQU 	1					* Descriptor l ́ınea B
-	TAMBS:  EQU     5					* Tama~no de bloque para SCAN 
-	TAMBP:  EQU     5				* Tama~no de bloque para PRINT
+	TAMBS:  EQU     10					* Tama~no de bloque para SCAN 
+	TAMBP:  EQU     3				* Tama~no de bloque para PRINT
 
 
  * Manejadores de excepciones
@@ -732,6 +717,9 @@ PRSCAN:
 
 *$BSVC/68kasm -la es_int.s
 *$BSVC/bsvc /usr/local/bsvc/samples/m68000/practica.setup
+
+
+
 
 PR17:
 	BSR INIT
@@ -845,122 +833,123 @@ BUC224:	MOVE.L #3,D0
 	BNE BUC224
 	BREAK
 
-PR38:
-	MOVE.L #61,D1
-	BSR INIT
-	MOVE.W #10,-(A7)
-	MOVE.W #4008,-(A7)
-	MOVE.L #$0,-(A7)
-	BSR PRINT 
 	
 
 
-PR12:
+PR14:
 	BSR INIT
-	MOVE.L #0,D0
-	MOVE.L #$64,D1
-	MOVE.L #$200,D5
+	MOVE.L #2,D0
+	MOVE.L #200,D5
 	MOVE.L #0,D6
 BUCA: 
+	MOVE.L #3,D0	
 	MOVE.L #$0,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$1,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$2,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$3,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$4,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$5,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$6,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$7,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$8,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$9,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
 	SUB.L #1,D5
-	CMP.L #0,D5
-	BEQ SAL2
-	CMP.L #$FFFFFFFF,D0
-	BEQ SAL2
 	ADD.L #1,D6
+	CMP.L #0,D5
+	BEQ SAL2	
+	CMP.L #$FFFFFFFF,D0
+	BEQ SAL2	
 	BRA BUCA
-SAL2: MOVE.L #$10,D5
+HOSTIA:
+	BREAK
+
+SAL2:
+	MOVE.L #10,D5
+	MOVE.L #$0,D6
+
 BUC2:
-	MOVE.L #0,D0
+	ADD.L #1,D6
+	MOVE.L #3,D0
 	BSR LEECAR
 	SUB.L #1,D5
 	CMP.L #0,D5
 	BEQ SAL3
 	CMP.L #$FFFFFFFF,D0
 	BEQ SAL3
-	ADD.L #1,D6
 	BRA BUC2
 SAL3:
-	MOVE.L #0,D0
-	MOVE.L #$10,D1
+	MOVE.L #3,D0
+	MOVE.L #$71,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$11,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$22,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$33,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$44,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$55,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$66,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$77,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$88,D1
 	BSR ESCCAR
-	MOVE.L #0,D0
+	MOVE.L #3,D0
 	MOVE.L #$99,D1
 	BSR ESCCAR
-	MOVE.L #$2000,D5
+	MOVE.L #2000,D5
+	MOVE.L #0,D6
 	BRA SAL4
 SAL4:
 	
-	MOVE.L #0,D0
+		MOVE.L #3,D0
 	BSR LEECAR
+	ADD.L #1,D6
 	SUB.L #1,D5
 	CMP.L #0,D5
 	BEQ SAL5
 	CMP.L #$FFFFFFFF,D0
 	BEQ SAL5
-	ADD.L #1,D6
+	
 	BRA SAL4
 SAL5:
 	BREAK
 
 
-*ORG $4008
-*BUFFERPr	DC.B	$a,$30,$31,$32,$33,$34,$a,$34,$35,$36
 
+
+	ORG $4008
+BUFFERPr	DC.B	$a,$30,$31,$32,$33,$34,$a,$34,$35,$36
 
 PRPRINT:
 	BSR INIT
