@@ -478,6 +478,9 @@ BUN_RA:	MOVE.L		punSARTI,A2		* Cargamos el puntero que vamos a utilizar
 		LEA 		buffSB,A3		* Cargamos el final del buff
 		MOVE.L 		#0,D0
 SIGUERA:
+		CMP.L 		A4,A3
+		BEQ 		LR_RA
+LRC_RA:
 		CMP.L 		A2,A4
 		BEQ			OUT_1
 		ADD.L 		#1,D0
@@ -491,6 +494,9 @@ BUN_TA:	MOVE.L		punPA,A2		* Cargamos el puntero que vamos a utilizar
 		LEA			buffPB,A3		* Cargamos direccion de final de buff.
 		MOVE.L 		#0,D0
 SIGUETA:
+		CMP.L 		A4,A3
+		BEQ 		LR_TA
+LRC_TA:
 		CMP.L 		A2,A4
 		BEQ			OUT_1
 		ADD.L 		#1,D0
@@ -504,6 +510,9 @@ BUN_RB:	MOVE.L 	punSBRTI,A2		* Cargamos el puntero que vamos a utilizar
 		LEA 		buffPA,A3		* Cargamos la direccion del fin de buff
 		MOVE.L 		#0,D0
 SIGUERB:
+		CMP.L 		A4,A3
+		BEQ 		LR_RB
+LRC_RB:
 		CMP.L 		A2,A4
 		BEQ			OUT_1
 		ADD.L 		#1,D0
@@ -518,6 +527,9 @@ BUN_TB:
 		LEA			finPB,A3		* Cargamos direccion de find e puntero
 		MOVE.L 		#0,D0
 SIGUETB:
+		CMP.L 		A4,A3
+		BEQ 		LR_RA
+LRC_TB:
 		CMP.L 		A2,A4
 		BEQ			OUT_1
 		ADD.L 		#1,D0
@@ -534,6 +546,25 @@ OUT_1:
 		CLR.L 		D0
 		UNLK 		A6
 		RTS
+
+LR_TA:
+		LEA buffPA,A5
+		MOVE.L A5,A2
+		BRA LRC_TA
+
+LR_RA:
+		LEA buffSA,A5
+		MOVE.L A5,A2
+		BRA LRC_RA
+LR_RB:
+		LEA buffSB,A5
+		MOVE.L A5,A2
+		BRA LRC_RB
+
+LR_TB:
+		LEA buffPB,A5
+		MOVE.L A5,A2
+		BRA LRC_TB
 
 
 ****************************  FIN LINEA  ********************************************************
