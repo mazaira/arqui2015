@@ -312,13 +312,6 @@ SCAN:
 		MOVE.L		#0,D4			* Inicializo contador
 		CMP.L		#0,D2			* Si tamaño = 0
 		BEQ			SCAN_FIN
-		MOVE.L 		D1,D0
-		BSR 		LINEA
-		CMP.B 		D2,D0
-		BGT 		LIN_PROB
-		CMP.B 		#0,D0
-		BEQ 		LIN_PROB
-		MOVE.L 		D0,D2
 		CMP.B		#0,D1
 		BEQ			SCAN_A			* Si descriptor = 0 lee de A
 		CMP.B		#1,D1
@@ -328,6 +321,13 @@ SCAN:
 		
 
 SCAN_A:	
+		MOVE.L 		D1,D0
+		BSR 		LINEA
+		CMP.B 		D2,D0
+		BGT 		LIN_PROB
+		CMP.B 		#0,D0
+		BEQ 		LIN_PROB
+		MOVE.L 		D0,D2
 		CMP.L		D4,D2			* Compruebo contadores
 		BEQ			SCAN_FIN			* Si son iguales nos salimos
 		MOVE.L		#0,D0			* Un 0 en D0 para asegurarnos que esta vacio	
@@ -339,6 +339,13 @@ SCAN_A:
 		BRA			SCAN_A			* Vuelvo a Scan
 		
 SCAN_B:
+		MOVE.L 		D1,D0
+		BSR 		LINEA
+		CMP.B 		D2,D0
+		BGT 		LIN_PROB
+		CMP.B 		#0,D0
+		BEQ 		LIN_PROB
+		MOVE.L 		D0,D2
 		CMP.L		D4,D2			* Compruebo contadores
 		BEQ			SCAN_FIN			* Si son iguales nos salimos
 		MOVE.L		#0,D0			* Un 0 en D0 para asegurarnos que esta vacio
@@ -472,7 +479,7 @@ BUN_RA:	MOVE.L		punSARTI,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L 		#0,D0
 SIGUERA:
 		CMP.L 		A2,A4
-		BEQ			OUT
+		BEQ			OUT_1
 		ADD.L 		#1,D0
 		CMP.B		#$0D,(A4)
 		BEQ			OUT
@@ -485,7 +492,7 @@ BUN_TA:	MOVE.L		punPA,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L 		#0,D0
 SIGUETA:
 		CMP.L 		A2,A4
-		BEQ			OUT
+		BEQ			OUT_1
 		ADD.L 		#1,D0
 		CMP.B		#$0D,(A4)
 		BEQ			OUT
@@ -498,7 +505,7 @@ BUN_RB:	MOVE.L 	punSBRTI,A2		* Cargamos el puntero que vamos a utilizar
 		MOVE.L 		#0,D0
 SIGUERB:
 		CMP.L 		A2,A4
-		BEQ			OUT
+		BEQ			OUT_1
 		ADD.L 		#1,D0
 		CMP.B		#$0D,(A4)
 		BEQ			OUT
@@ -512,15 +519,20 @@ BUN_TB:
 		MOVE.L 		#0,D0
 SIGUETB:
 		CMP.L 		A2,A4
-		BEQ			OUT
+		BEQ			OUT_1
 		ADD.L 		#1,D0
 		CMP.B		#$0D,(A4)
 		BEQ			OUT
 		ADD.L 		#1,A4		
 		BRA 		SIGUETB
 OUT:
-		*MOVE.L D1,D0
 		UNLK A6
+		RTS
+OUT_1:
+		CMP.B 		#$0D,(A4)
+		BEQ 		OUT
+		CLR.L 		D0
+		UNLK 		A6
 		RTS
 
 
@@ -557,9 +569,9 @@ T_RDY_A:
 		BSR 		LEECAR			* Salto a leecar.
 		CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer vacio
 		BEQ 		FIN_TA			* Si error fin.
+		MOVE.B		D0,TBA			* Introducimos el caracter en la linea A de transmisión.	
 		CMP.B 		#$0D,D0
 		BEQ 		RCA_RTI
-		MOVE.B		D0,TBA			* Introducimos el caracter en la linea A de transmisión.	
 		BRA 		RTI_FIN			* Si son iguales hemos terminado
 
 FIN_TA:        	
@@ -575,9 +587,9 @@ T_RDY_B:
 		BSR 		LEECAR			* Salto a LEECAR
 		CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer vacio
 		BEQ			FIN_TB			* Si error, fin.
+		MOVE.B 		D0,TBB			* Introducimos el caracter en la linea B de transmisión.
 		CMP.B 		#$0D,D0
 		BEQ 		RCB_RTI
-		MOVE.B 		D0,TBB			* Introducimos el caracter en la linea B de transmisión.
 		BRA 		RTI_FIN			*
 		
 FIN_TB:       
@@ -603,13 +615,11 @@ R_RDY_B:
 		BRA			RTI_FIN			* si error fin.
 
 RCA_RTI:
-		MOVE.B 		#$0D,TBA
 		MOVE.B 		#$0A,TBA
 		BRA 		FIN_TA
 
 
-RCB_RTI:
-		MOVE.B 		#$0D,TBB		
+RCB_RTI:		
 		MOVE.B 		#$0A,TBB
 		BRA 		FIN_TB
 
@@ -912,7 +922,7 @@ DESA: EQU 0 * Descriptor l ́ınea A
 DESB: EQU 1 * Descriptor l ́ınea B
 NLIN: EQU 3 * N ́umero de l ́ıneas a leer
 TAML: EQU 30 * Tama~no de l ́ınea para SCAN
-TAMB: EQU 5 * Tama~no de bloque para PRINT
+TAMB: EQU 20 * Tama~no de bloque para PRINT
 
 INICIO: * Manejadores de excepciones
 	MOVE.L #BUS_ERROR,8 * Bus error handler
