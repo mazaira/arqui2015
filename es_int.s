@@ -598,7 +598,10 @@ RTI:
 		BTST		#5,D1			* Comprobamos el bit 5
 		BNE			R_RDY_B			* Si es 1 recibir por linea B
 		BRA			RTI_FIN			* Si no esta activo ninguno saltar a RTI_FIN
-T_RDY_A:
+
+T_RDY_A:	MOVE.B		emptySA,D2
+		CMP.B		#0,D2
+		BEQ		TLIN_A
 		MOVE.L		#0,D0			* D0 = 0
 		BSET		#1,D0			* BIT 0 = 0, BIT 1 = 1; 
 		BSR 		LEECAR			* Salto a leecar.
@@ -606,7 +609,7 @@ T_RDY_A:
 		BEQ 		FIN_TA			* Si error fin.
 		MOVE.B		D0,TBA			* Introducimos el caracter en la linea A de transmisión.	
 		CMP.B 		#$0D,D0
-		BEQ 		RCA_RTI
+		BEQ 		TLIN_A
 		BRA 		RTI_FIN			* Si son iguales hemos terminado
 
 FIN_TA:        	
@@ -615,16 +618,18 @@ FIN_TA:
 		MOVE.L		#0,D0			* Limpiamos D0 al volver de vacio
 		BRA			RTI_FIN			* Saltamos al final de la rti
 		
-T_RDY_B:
+T_RDY_B:	MOVE.B		emptySB,D2
+		CMP.B		#0,D2
+		BEQ		TLIN_B
 		MOVE.L		#0,D0			* D0 = 0
 		BSET		#1,D0			* BIT 0 = 1, BIT 1 = 1
 		BSET 		#0,D0			*	
 		BSR 		LEECAR			* Salto a LEECAR
 		CMP.L		#$FFFFFFFF,D0	* Si d0 = #$FFFFFFFF buffer vacio
-		BEQ			FIN_TB			* Si error, fin.
+		BEQ		FIN_TB			* Si error, fin.
 		MOVE.B 		D0,TBB			* Introducimos el caracter en la linea B de transmisión.
 		CMP.B 		#$0D,D0
-		BEQ 		RCB_RTI
+		BEQ 		TLIN_B
 		BRA 		RTI_FIN			*
 		
 FIN_TB:       
@@ -646,17 +651,24 @@ R_RDY_B:
 		MOVE.B		RBB,D1			* Cogemos el caracter del puerto de recepción
 		MOVE.W		#0,D0			* Reseteamos D0
 		BSET		#0,D0			* BIT 0 = 1
-		BSR			ESCCAR			* Vamos a rutina ESCCAR
-		BRA			RTI_FIN			* si error fin.
+		BSR		ESCCAR			* Vamos a rutina ESCCAR
+		BRA		RTI_FIN			* si error fin.
 
-RCA_RTI:
-		MOVE.B 		#$0A,TBA
-		BRA 		FIN_TA
+RCA_RTI:	MOVE.B 		#0,emptySA
+		BRA 		RTI_FIN
 
 
-RCB_RTI:		
-		MOVE.B 		#$0A,TBB
-		BRA 		FIN_TB
+RCB_RTI		MOVE.B 		#0,emptySB
+		BRA 		RTI_FIN
+
+TLIN_A:		MOVE.B 		#1,emptySA	
+		MOVE.B		#10,TBA
+		BRA		FIN_TA
+
+TLIN_B:		MOVE.B 		#1,emptySB		
+		MOVE.B		#10,TBB
+		BRA		FIN_TB
+
 
 
 RTI_FIN:
@@ -671,6 +683,8 @@ RTI_FIN:
 		MOVE.W		(A7)+,D1
 		MOVE.W		(A7)+,D0
 		RTE
+
+
 **************************** FIN RTI ********************************************************
 
 
