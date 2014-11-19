@@ -317,7 +317,7 @@ SCAN:
 		CMP.B		#1,D1
 		BEQ			SCAN_B			* Si descriptor = 1 lee de B
 		MOVE.L		#$FFFFFFFF,D0	* Si no ERROR
-		BRA			SCAN_FIN		* y sale de SCAN
+		BRA			SCAN2_FIN		* y sale de SCAN
 		
 
 SCAN_A:	
@@ -365,7 +365,11 @@ LIN_PROB:
 SCAN_FIN:
 		MOVE.L 		D4,D0
 		UNLK		A6
-		RTS  
+		RTS 
+
+SCAN2_FIN:
+		UNLK 		A6
+		RTS 
 
 
 		
